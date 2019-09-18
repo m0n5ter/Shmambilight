@@ -2,3 +2,7 @@
 /Shmambilight/obj
 /Shmambilight/bin
 /.vs
+/Windows/Shmambilight/obj
+/Windows/Shmambilight/bin
+/Windows/packages
+/Windows/.vs
