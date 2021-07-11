@@ -5,7 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows.Media;
+using NLog;
 using Shmambilight.Config;
+using Shmambilight.Screen;
 
 namespace Shmambilight.Leds
 {
@@ -13,7 +15,6 @@ namespace Shmambilight.Leds
     {
         private readonly SerialPort _port;
         private readonly Thread _thread;
-        private readonly List<DateTime> _ticks = new List<DateTime>();
         private Color[] _colors = new Color[0];
         private double _fadeDuration;
         private double _fadeEndValue;
@@ -21,34 +22,49 @@ namespace Shmambilight.Leds
         private double _fadeStartValue;
         private bool _isClosing;
 
-        private LedDevice(int port)
-        {
-            _port = new SerialPort($"COM{port}", 115200)
-            {
-                DataBits = 8,
-                StopBits = StopBits.One,
-                Parity = Parity.None,
-                Encoding = Encoding.ASCII,
-                ReadTimeout = 3000,
-                WriteTimeout = 3000
-            };
+        public event Action Updated;
 
-            _port.Open();
+        private TickCounter Ticks { get; } = new TickCounter();
+
+        public LedDevice(string portName, LedDevice original)
+        {
+            if (portName != null)
+            {
+                _port = new SerialPort(portName, 115200)
+                {
+                    DataBits = 8,
+                    StopBits = StopBits.One,
+                    Parity = Parity.None,
+                    Encoding = Encoding.ASCII,
+                    ReadTimeout = 3000,
+                    WriteTimeout = 3000
+                };
+
+                _port.Open();
+            }
 
             try
             {
                 Write(new byte[256 * 3]);
-                _port.Write("LEDS");
+                _port?.Write("LEDS");
                 WriteByte(0);
                 ReadResponse();
 
-                lock (_ticks)
-                    _ticks.Add(DateTime.Now);
+                Ticks.Add();
             }
             catch
             {
-                _port.Close();
+                _port?.Close();
                 throw;
+            }
+
+            if (original != null)
+            {
+                _colors = original._colors.ToArray();
+                _fadeStartTime = original._fadeStartTime;
+                _fadeDuration = original._fadeDuration;
+                _fadeEndValue = original._fadeEndValue;
+                _fadeStartValue = original._fadeStartValue;
             }
 
             _thread = new Thread(LedDeviceThreadProc) {IsBackground = true};
@@ -73,8 +89,9 @@ namespace Shmambilight.Leds
 
         public Exception Error { get; private set; }
 
-        public double Fps { get; private set; }
-        public string PortName => _port?.PortName;
+        public string PortName => _port?.PortName ?? "Emulated";
+
+        public DateTime? LastUpdated { get; private set; }
 
         public void Close()
         {
@@ -114,32 +131,26 @@ namespace Shmambilight.Leds
 
                     if (!lastSentBytes.SequenceEqual(bytes))
                     {
-                        _port.Write("LEDS");
+                        _port?.Write("LEDS");
                         WriteByte((byte) colors.Length);
                         Write(bytes);
                         ReadResponse();
                         lastSentBytes = bytes;
 
-                        lock (_ticks)
-                        {
-                            _ticks.Add(DateTime.Now);
-
-                            while (_ticks.Count > 11)
-                                _ticks.RemoveAt(0);
-
-                            Fps = 1 / _ticks.Skip(1).Select((dt, i) => (dt - _ticks[i]).TotalSeconds).Average();
-                        }
+                        Ticks.Add();
+                        LastUpdated = DateTime.Now;
+                        Updated?.Invoke();
                     }
                 }
                 catch (Exception exception)
                 {
                     Error = exception;
-                    _port.Dispose();
+                    _port?.Dispose();
                     return;
                 }
             }
 
-            _port.Dispose();
+            _port?.Dispose();
         }
 
         private void WriteByte(byte b)
@@ -151,7 +162,7 @@ namespace Shmambilight.Leds
         {
             try
             {
-                _port.Write(bytes, 0, bytes.Length);
+                _port?.Write(bytes, 0, bytes.Length);
             }
             catch (Exception exception)
             {
@@ -161,13 +172,16 @@ namespace Shmambilight.Leds
 
         private void ReadResponse()
         {
-            if (!SpinWait.SpinUntil(() => _port.BytesToRead == 2, 1000))
-                throw new LedDeviceException("Waiting for OK response timed out");
+            if (_port != null)
+            {
+                if (!SpinWait.SpinUntil(() => _port.BytesToRead == 2, 1000))
+                    throw new LedDeviceException("Waiting for OK response timed out");
 
-            var response = _port.ReadExisting();
+                var response = _port.ReadExisting();
 
-            if (response != "OK")
-                throw new LedDeviceException($"Wrong response received: {response}");
+                if (response != "OK")
+                    throw new LedDeviceException($"Wrong response received: {response}");
+            }
         }
 
         public void WriteLeds(IList<Led> leds)
@@ -189,25 +203,25 @@ namespace Shmambilight.Leds
             }
         }
 
-        public static LedDevice Detect()
+        public static LedDevice Detect(LedDevice original, Action<LogLevel, string> onLog)
         {
-            if (Settings.Current.LedDevice.Port > 0)
-                return new LedDevice(Settings.Current.LedDevice.Port);
+            if (Settings.Current.LedDevice.Port != null)
+                return new LedDevice(Settings.Current.LedDevice.Port, original);
 
-            var result = Enumerable.Range(1, 256).Select(i =>
+            var result = SerialPort.GetPortNames().Select(portName =>
             {
                 try
                 {
-                    return new LedDevice(i);
+                    return new LedDevice(portName, original);
                 }
                 catch (UnauthorizedAccessException)
                 {
-                    App.LogInfo($"COM{i} seems to be used by another process");
+                    onLog?.Invoke(LogLevel.Info, $"COM{portName} seems to be used by another process");
                     return null;
                 }
                 catch (LedDeviceException)
                 {
-                    App.LogInfo($"COM{i} is available but device doesn't seem to be connected");
+                    onLog?.Invoke(LogLevel.Info, $"COM{portName} is available but device doesn't seem to be connected");
                     return null;
                 }
                 catch (Exception)
@@ -217,9 +231,9 @@ namespace Shmambilight.Leds
             }).FirstOrDefault(_ => _ != null);
 
             if (result != null)
-                App.LogInfo($"LED device detected at {result._port.PortName}");
+                onLog?.Invoke(LogLevel.Info,  $"LED device detected at {result.PortName}");
             else
-                App.LogWarning("LED device was not detected");
+                onLog?.Invoke(LogLevel.Warn, "LED device was not detected");
 
             return result;
         }

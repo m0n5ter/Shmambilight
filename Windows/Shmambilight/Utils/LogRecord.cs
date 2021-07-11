@@ -1,4 +1,5 @@
 using System;
+using NLog;
 
 namespace Shmambilight.Utils
 {
@@ -11,10 +12,6 @@ namespace Shmambilight.Utils
         public DateTime Time { get; } = DateTime.Now;
 
         public Exception Exception { get; }
-
-        public LogRecord() :this(LogLevel.Error, "Test message", new ApplicationException("Test exception"))
-        {
-        }
 
         public LogRecord(LogLevel level, string message, Exception exception = null)
         {

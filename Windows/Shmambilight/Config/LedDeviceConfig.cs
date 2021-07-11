@@ -5,6 +5,6 @@ namespace Shmambilight.Config
     [Serializable]
     public class LedDeviceConfig
     {
-        public int Port { get; set; } = 0;
+        public string Port { get; set; } = null;
     }
 }

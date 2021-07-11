@@ -1,12 +1,13 @@
 using System;
+using System.Linq;
+using Shmambilight.Screen;
 
 namespace Shmambilight.Config
 {
     [Serializable]
     public class ScreenGrabberConfig
     {
-        public int AdapterIndex { get; set; } = 0;
-
-        public int OutputIndex { get; set; } = 0;
+        public string DeviceName { get; set; } = ScreenGrabberBase.Screens.FirstOrDefault()?.DeviceName;
+        public double FrameRateLimit { get; set; } = 30;
     }
 }

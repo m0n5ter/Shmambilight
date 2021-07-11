@@ -5,13 +5,12 @@ namespace Shmambilight.Leds
 {
     public class Led
     {
-        public Rect ScreenArea { get; }
+        public Rect GrabArea { get; set; }
+
+        public Point Location { get; set; }
+
+        public Point ConnectorPoint { get; set; }
 
         public Color Color { get; set; }
-
-        public Led(Rect screenArea)
-        {
-            ScreenArea = screenArea;
-        }
     }
 }

@@ -42,15 +42,6 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
-    </Reference>
-    <Reference Include="SharpDX.Direct3D11, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpDX.Direct3D11.4.2.0\lib\net45\SharpDX.Direct3D11.dll</HintPath>
-    </Reference>
-    <Reference Include="SharpDX.DXGI, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
-      <HintPath>..\packages\SharpDX.DXGI.4.2.0\lib\net45\SharpDX.DXGI.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
@@ -80,11 +71,17 @@
     <Compile Include="Leds\LedDevice.cs" />
     <Compile Include="Leds\LedDeviceException.cs" />
     <Compile Include="Leds\LedStripArray.cs" />
-    <Compile Include="Utils\LogLevel.cs" />
+    <Compile Include="Screen\Frame.cs" />
+    <Compile Include="Screen\MonitorInfo.cs" />
+    <Compile Include="Screen\Native.cs" />
+    <Compile Include="Screen\ScreenGrabberBase.cs" />
+    <Compile Include="Screen\ScreenGrabberDxgi.cs" />
+    <Compile Include="Screen\ScreenGrabberWindowsCapture.cs" />
+    <Compile Include="Screen\TickCounter.cs" />
+    <Compile Include="Screen\WindowsCaptureHelper.cs" />
+    <Compile Include="Mvvm\ViewModelBase.cs" />
     <Compile Include="Utils\LogRecord.cs" />
     <Compile Include="Utils\ProcessUtils.cs" />
-    <Compile Include="Screen\ScreenFrame.cs" />
-    <Compile Include="Screen\ScreenGrabber.cs" />
     <Compile Include="UI\DebugWindow.xaml.cs">
       <DependentUpon>DebugWindow.xaml</DependentUpon>
     </Compile>
@@ -92,12 +89,12 @@
     <Compile Include="UI\LedViewControl.cs" />
     <Compile Include="Config\Settings.cs" />
     <Compile Include="UI\StatsRow.cs" />
+    <Compile Include="ViewModels\MainViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="UI\DebugWindow.xaml">
@@ -108,5 +105,17 @@
   <ItemGroup>
     <Resource Include="icon.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.SDK.Contracts">
+      <Version>10.0.19041.1</Version>
+    </PackageReference>
+    <PackageReference Include="NLog">
+      <Version>4.7.10</Version>
+    </PackageReference>
+    <PackageReference Include="SharpDX.Direct3D11">
+      <Version>4.2.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

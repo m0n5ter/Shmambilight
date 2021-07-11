@@ -4,105 +4,101 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="clr-namespace:Shmambilight.UI"
-        xmlns:ambilightService="clr-namespace:Shmambilight"
         xmlns:utils="clr-namespace:Shmambilight.Utils"
+        xmlns:viewModels="clr-namespace:Shmambilight.ViewModels"
         mc:Ignorable="d"
-        Title="Shmambilight v1.0" 
-        Background="Silver" Width="400" Height="440" MinWidth="200" MaxWidth="800" MinHeight="200" WindowStartupLocation="CenterScreen">
+        Title="Shmambilight v2.0"
+        d:DataContext="{d:DesignInstance viewModels:MainViewModel}"
+        Background="Silver" Width="600" Height="460" MinWidth="400" MinHeight="300" WindowStartupLocation="CenterScreen">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <Grid Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition/>
-            </Grid.RowDefinitions>
+    <TabControl>
+        <TabItem Header="Screen preview">
+            <Grid>
+                <Viewbox>
+                    <ui:LedViewControl Margin="300" x:Name="LedView" Width="{Binding ScreenGrabber.Screen.ScreenSize.Width}"
+                                       Height="{Binding ScreenGrabber.Screen.ScreenSize.Height}"/>
+                </Viewbox>
 
-            <Viewbox>
-                <Border BorderThickness="5" BorderBrush="Black" Background="WhiteSmoke">
-                    <Grid x:Name="Grid" Width="1920" Height="1080">
-                        <Border x:Name="Letterbox" BorderThickness="3" BorderBrush="#80004000" Background="#1000FF00"/>
-                        <ui:LedViewControl x:Name="LedView"/>
+                <Border Padding="10" Background="#80FFFFFF" VerticalAlignment ="Center" HorizontalAlignment="Center">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                        <Viewbox MaxHeight="480">
-                            <Border Padding="10" Background="#80FFFFFF">
-                                <DataGrid x:Name="Stats" Background="Transparent" GridLinesVisibility="None" HeadersVisibility="None" BorderThickness="0" IsReadOnly="True" 
-                                  RowBackground="Transparent" IsHitTestVisible="False" AutoGenerateColumns="False">
-                                    <DataGrid.Items>
-                                        <ui:StatsRow Name="LED device port"/>
-                                        <ui:StatsRow Name="LED count"/>
-                                        <ui:StatsRow Name="Screen size"/>
-                                        <ui:StatsRow Name="Margins detected"/>
-                                        <ui:StatsRow Name="Screen grabber FPS"/>
-                                        <ui:StatsRow Name="LED device FPS"/>
-                                    </DataGrid.Items>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
 
-                                    <DataGrid.Columns>
-                                        <DataGridTemplateColumn>
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate DataType="ui:StatsRow">
-                                                    <TextBlock Text="{Binding Name}" Margin="4,-2"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
+                        <TextBlock Grid.Row="0" Grid.Column="0">Screen</TextBlock>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding ScreenGrabber.Screen.DeviceName}"/>
 
-                                        <DataGridTemplateColumn>
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate DataType="ui:StatsRow">
-                                                    <TextBlock Text="{Binding Value}" Margin="4,-1,4,-3" HorizontalAlignment="Right" FontWeight="Bold" FontSize="12" FontFamily="Lucida Console" VerticalAlignment="Center"/>
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Border>
-                        </Viewbox>
+                        <TextBlock Grid.Row="1" Grid.Column="0">Screen size</TextBlock>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding ScreenGrabber.Screen.ScreenSize}"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0">LED device port</TextBlock>
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding LedDevice.PortName}"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0">LED count</TextBlock>
+                        <TextBlock Grid.Row="3" Grid.Column="2" Text="{Binding LedStrips.LedCount}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0">Margins detected</TextBlock>
+                        <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding ScreenGrabber.Frame.Margins}"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0">FPS</TextBlock>
+                        <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding ScreenGrabber.GrabCounter.Fps, StringFormat=0.#}"/>
                     </Grid>
                 </Border>
-            </Viewbox>
+            </Grid>
+        </TabItem>
 
-            <Border Grid.Row="1" Padding="4" Margin="0,10,0,0" BorderBrush="Black" BorderThickness="1">
+        <TabItem Header="Log">
+            <DataGrid Background="WhiteSmoke" BorderBrush="DarkGray" HorizontalGridLinesBrush="#e0e0e0"  VerticalGridLinesBrush="#e0e0e0" HeadersVisibility="None" BorderThickness="0" 
+                  EnableRowVirtualization="True" EnableColumnVirtualization="True" MinHeight="100"
+                  ItemsSource="{Binding Log}" ScrollViewer.CanContentScroll="False" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="70">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="utils:LogRecord">
+                                <TextBlock Text="{Binding Time, StringFormat=HH:mm:ss.fff}" Margin="4,-1"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-                <DataGrid Background="WhiteSmoke" HorizontalGridLinesBrush="#e0e0e0"  VerticalGridLinesBrush="#e0e0e0" HeadersVisibility="None" BorderThickness="0" 
-                      EnableRowVirtualization="True" EnableColumnVirtualization="True" MinHeight="100"
-                      ItemsSource="{Binding Source={x:Static ambilightService:App.Log}}" ScrollViewer.CanContentScroll="False" AutoGenerateColumns="False" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="70">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="utils:LogRecord">
-                                    <TextBlock Text="{Binding Time, StringFormat=HH:mm:ss.fff}" Margin="4,-1"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                    <DataGridTemplateColumn>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="utils:LogRecord">
+                                <TextBlock Text="{Binding Level}" Margin="4,-1"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="utils:LogRecord">
-                                    <TextBlock Text="{Binding Level}" Margin="4,-1"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="utils:LogRecord">
+                                <TextBlock Text="{Binding Message}" TextTrimming="CharacterEllipsis" Margin="4,-1" ToolTip="{Binding Message}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="utils:LogRecord">
-                                    <TextBlock Text="{Binding Message}" TextTrimming="CharacterEllipsis" Margin="4,-1" ToolTip="{Binding Message}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Width="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="utils:LogRecord">
+                                <TextBlock Text="Error" Margin="4,-1" Foreground="Red"
+                                       Visibility="{Binding Exception, Converter={ui:IsEqualConverter TrueValue=Hidden, FalseValue=Visible}, ConverterParameter={x:Null}}"
+                                       ToolTip="{Binding Exception}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Width="40">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="utils:LogRecord">
-                                    <TextBlock Text="Error" Margin="4,-1" Foreground="Red"
-                                           Visibility="{Binding Exception, Converter={ui:IsEqualConverter TrueValue=Hidden, FalseValue=Visible}, ConverterParameter={x:Null}}"
-                                           ToolTip="{Binding Exception}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Border>
-        </Grid>
-    </ScrollViewer>
+                </DataGrid.Columns>
+            </DataGrid>
+        </TabItem>
+    </TabControl>
 </Window>
